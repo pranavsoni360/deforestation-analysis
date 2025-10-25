@@ -13,5 +13,5 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from app import app
 
 # This is the entry point for Vercel
-# The app variable is what Vercel will use to serve the Flask application
+# Export the Flask app directly for Vercel
 handler = app
