@@ -1,0 +1,706 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forest Analysis - Simple Tool</title>
+    
+    <!-- CSS Libraries -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" rel="stylesheet">
+    <link href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --forest-green: #2d5016;
+            --light-green: #4a7c59;
+            --nature-green: #8fbc8f;
+            --warm-orange: #ff8c42;
+            --alert-red: #e74c3c;
+            --safe-blue: #3498db;
+            --background: #f8fffe;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, var(--background) 0%, #f0f8f0 100%);
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, var(--forest-green), var(--light-green));
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .hero-section h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            margin-bottom: 1rem;
+        }
+
+        .hero-section p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .main-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .step-indicator {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 2rem;
+        }
+
+        .step {
+            background: #e9ecef;
+            color: #6c757d;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            margin: 0 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .step.active {
+            background: var(--forest-green);
+            color: white;
+        }
+
+        .step.completed {
+            background: var(--nature-green);
+            color: white;
+        }
+
+        .step-line {
+            height: 2px;
+            width: 60px;
+            background: #dee2e6;
+            transition: all 0.3s ease;
+        }
+
+        .step-line.completed {
+            background: var(--nature-green);
+        }
+
+        #map {
+            height: 400px;
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            margin-bottom: 1.5rem;
+        }
+
+        .map-instructions {
+            background: #e8f4f8;
+            border: 1px solid #bee5eb;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        .btn-large {
+            padding: 12px 30px;
+            font-size: 1.1rem;
+            border-radius: 25px;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary {
+            background: var(--forest-green);
+            border: none;
+        }
+
+        .btn-primary:hover {
+            background: var(--light-green);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(45, 80, 22, 0.3);
+        }
+
+        .results-section {
+            display: none;
+        }
+
+        .result-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-left: 4px solid var(--forest-green);
+            transition: all 0.3s ease;
+        }
+
+        .result-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+        }
+
+        .result-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 0.5rem;
+        }
+
+        .result-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .result-description {
+            margin-top: 1rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e9ecef;
+            font-size: 0.95rem;
+        }
+
+        .safe-rate {
+            color: var(--safe-blue);
+        }
+
+        .warning-rate {
+            color: var(--warm-orange);
+        }
+
+        .danger-rate {
+            color: var(--alert-red);
+        }
+
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--forest-green);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .recommendation-card {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .icon-large {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.8;
+        }
+
+        .contact-info {
+            background: var(--forest-green);
+            color: white;
+            text-align: center;
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+
+        @media (max-width: 768px) {
+            .hero-section h1 {
+                font-size: 2rem;
+            }
+            
+            .hero-section p {
+                font-size: 1rem;
+            }
+            
+            .main-card {
+                padding: 1.5rem;
+            }
+            
+            .step-indicator {
+                flex-wrap: wrap;
+            }
+            
+            .step-line {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="container">
+            <h1><i class="fas fa-tree"></i> Forest Sustainability Check</h1>
+            <p>Get instant insights about sustainable forest management for any area. Simply select your region on the map below.</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Step Indicator -->
+        <div class="step-indicator">
+            <div class="step active" id="step1">1</div>
+            <div class="step-line" id="line1"></div>
+            <div class="step" id="step2">2</div>
+            <div class="step-line" id="line2"></div>
+            <div class="step" id="step3">3</div>
+        </div>
+
+        <!-- Step 1: Area Selection -->
+        <div class="main-card" id="selection-section">
+            <h3 class="text-center mb-4">
+                <i class="fas fa-map-marked-alt text-success"></i>
+                Step 1: Select Your Area
+            </h3>
+            
+            <div class="map-instructions">
+                <i class="fas fa-info-circle"></i>
+                <strong>How to use:</strong> Click and drag on the map to draw a rectangle around the area you want to analyze. You can also click on specific locations for point analysis.
+            </div>
+
+            <div id="map"></div>
+
+            <div class="text-center">
+                <button class="btn btn-primary btn-large" id="analyze-btn" disabled onclick="analyzeArea()">
+                    <i class="fas fa-search"></i> Analyze This Area
+                </button>
+            </div>
+
+            <div class="mt-3 text-center">
+                <small class="text-muted">
+                    Selected area will be analyzed for forest cover, biodiversity, and sustainable deforestation rates.
+                </small>
+            </div>
+        </div>
+
+        <!-- Step 2: Analysis Loading -->
+        <div class="loading-spinner" id="loading-section">
+            <div class="spinner"></div>
+            <h5>Analyzing Your Selected Area...</h5>
+            <p class="text-muted">This may take a few moments as we process environmental data.</p>
+        </div>
+
+        <!-- Step 3: Results -->
+        <div class="results-section" id="results-section">
+            <div class="main-card">
+                <h3 class="text-center mb-4">
+                    <i class="fas fa-chart-line text-success"></i>
+                    Your Forest Analysis Results
+                </h3>
+
+                <div class="row" id="results-grid">
+                    <!-- Results will be populated here -->
+                </div>
+
+                <div class="recommendation-card">
+                    <h5><i class="fas fa-lightbulb"></i> What This Means</h5>
+                    <div id="interpretation">
+                        <!-- Interpretation will be populated here -->
+                    </div>
+                </div>
+
+                <div class="text-center mt-4">
+                    <button class="btn btn-outline-primary btn-large" onclick="startOver()">
+                        <i class="fas fa-redo"></i> Analyze Another Area
+                    </button>
+                    <button class="btn btn-success btn-large ms-2" onclick="downloadReport()">
+                        <i class="fas fa-download"></i> Download Report
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="contact-info">
+        <div class="container">
+            <h5>Need Help or Have Questions?</h5>
+            <p>Our forest conservation experts are here to help interpret your results and provide guidance.</p>
+            <p><i class="fas fa-envelope"></i> info@forestanalysis.org | <i class="fas fa-phone"></i> +1 (555) 123-4567</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+
+    <script>
+        // Global variables
+        let map;
+        let drawnItems;
+        let selectedArea = null;
+        let analysisResults = null;
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeMap();
+        });
+
+        function initializeMap() {
+            // Initialize map
+            map = L.map('map').setView([-10, -60], 4);
+
+            // Add tile layer
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+
+            // Initialize the FeatureGroup to store editable layers
+            drawnItems = new L.FeatureGroup();
+            map.addLayer(drawnItems);
+
+            // Initialize the draw control and pass it the FeatureGroup of editable layers
+            const drawControl = new L.Control.Draw({
+                edit: {
+                    featureGroup: drawnItems,
+                    remove: true
+                },
+                draw: {
+                    polygon: false,
+                    polyline: false,
+                    circle: false,
+                    circlemarker: false,
+                    marker: true,
+                    rectangle: true
+                }
+            });
+            map.addControl(drawControl);
+
+            // Handle draw events
+            map.on(L.Draw.Event.CREATED, function (e) {
+                const layer = e.layer;
+                
+                // Clear previous selections
+                drawnItems.clearLayers();
+                
+                // Add new selection
+                drawnItems.addLayer(layer);
+                
+                // Store selected area
+                if (e.layerType === 'rectangle') {
+                    const bounds = layer.getBounds();
+                    selectedArea = {
+                        type: 'rectangle',
+                        bounds: {
+                            north: bounds.getNorth(),
+                            south: bounds.getSouth(),
+                            east: bounds.getEast(),
+                            west: bounds.getWest()
+                        }
+                    };
+                } else if (e.layerType === 'marker') {
+                    const latlng = layer.getLatLng();
+                    selectedArea = {
+                        type: 'point',
+                        lat: latlng.lat,
+                        lng: latlng.lng
+                    };
+                }
+                
+                // Enable analyze button
+                document.getElementById('analyze-btn').disabled = false;
+                updateStepIndicator(1);
+            });
+
+            // Handle draw edit/delete events
+            map.on(L.Draw.Event.DELETED, function () {
+                selectedArea = null;
+                document.getElementById('analyze-btn').disabled = true;
+            });
+        }
+
+        function updateStepIndicator(currentStep) {
+            // Reset all steps
+            for (let i = 1; i <= 3; i++) {
+                const step = document.getElementById(`step${i}`);
+                const line = document.getElementById(`line${i}`);
+                
+                if (i < currentStep) {
+                    step.className = 'step completed';
+                    if (line) line.className = 'step-line completed';
+                } else if (i === currentStep) {
+                    step.className = 'step active';
+                    if (line) line.className = 'step-line';
+                } else {
+                    step.className = 'step';
+                    if (line) line.className = 'step-line';
+                }
+            }
+        }
+
+        async function analyzeArea() {
+            if (!selectedArea) {
+                alert('Please select an area on the map first.');
+                return;
+            }
+
+            // Show loading
+            document.getElementById('selection-section').style.display = 'none';
+            document.getElementById('loading-section').style.display = 'block';
+            updateStepIndicator(2);
+
+            try {
+                // Prepare request data
+                let requestData;
+                if (selectedArea.type === 'rectangle') {
+                    requestData = {
+                        area_type: 'rectangle',
+                        bounds: selectedArea.bounds
+                    };
+                } else {
+                    requestData = {
+                        area_type: 'point',
+                        latitude: selectedArea.lat,
+                        longitude: selectedArea.lng
+                    };
+                }
+
+                // Make API call
+                const response = await fetch('/api/analyze-simple', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    analysisResults = data;
+                    displayResults(data);
+                } else {
+                    throw new Error(data.error || 'Analysis failed');
+                }
+
+            } catch (error) {
+                console.error('Error during analysis:', error);
+                showError('Analysis failed: ' + error.message);
+                
+                // Return to selection
+                document.getElementById('loading-section').style.display = 'none';
+                document.getElementById('selection-section').style.display = 'block';
+                updateStepIndicator(1);
+            }
+        }
+
+        function displayResults(data) {
+            // Hide loading, show results
+            document.getElementById('loading-section').style.display = 'none';
+            document.getElementById('results-section').style.display = 'block';
+            updateStepIndicator(3);
+
+            const resultsGrid = document.getElementById('results-grid');
+            const interpretation = document.getElementById('interpretation');
+
+            // Clear previous results
+            resultsGrid.innerHTML = '';
+            interpretation.innerHTML = '';
+
+            // Safe Deforestation Rate
+            const safeRate = data.safe_deforestation_percentage * 100;
+            let rateClass, rateIcon;
+            
+            if (safeRate < 0.01) {
+                rateClass = 'safe-rate';
+                rateIcon = 'fa-shield-alt';
+            } else if (safeRate < 0.1) {
+                rateClass = 'warning-rate';
+                rateIcon = 'fa-exclamation-triangle';
+            } else {
+                rateClass = 'danger-rate';
+                rateIcon = 'fa-fire';
+            }
+
+            // Create result cards
+            resultsGrid.innerHTML = `
+                <div class="col-md-6 mb-3">
+                    <div class="result-card">
+                        <i class="fas ${rateIcon} icon-large ${rateClass}"></i>
+                        <div class="result-value ${rateClass}">${safeRate.toFixed(4)}%</div>
+                        <div class="result-label">Safe Annual Deforestation Rate</div>
+                        <div class="result-description">
+                            This is the maximum percentage of forest that can be sustainably removed per year without causing long-term environmental damage.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <div class="result-card">
+                        <i class="fas fa-tree icon-large" style="color: var(--nature-green);"></i>
+                        <div class="result-value" style="color: var(--nature-green);">${data.forest_cover_percentage.toFixed(1)}%</div>
+                        <div class="result-label">Current Forest Cover</div>
+                        <div class="result-description">
+                            The percentage of your selected area that is currently covered by forest.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <div class="result-card">
+                        <i class="fas fa-leaf icon-large" style="color: var(--light-green);"></i>
+                        <div class="result-value" style="color: var(--light-green);">${data.biodiversity_conservation_requirement.toFixed(0)}%</div>
+                        <div class="result-label">Must Be Protected</div>
+                        <div class="result-description">
+                            The minimum percentage of forest that must remain untouched to preserve biodiversity and ecosystem services.
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6 mb-3">
+                    <div class="result-card">
+                        <i class="fas fa-seedling icon-large" style="color: var(--forest-green);"></i>
+                        <div class="result-value" style="color: var(--forest-green);">${data.ecological_resilience_score.toFixed(1)}/10</div>
+                        <div class="result-label">Forest Health Score</div>
+                        <div class="result-description">
+                            Overall health and resilience of the forest ecosystem. Higher scores indicate stronger, more sustainable forests.
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            // Generate interpretation
+            let interpretationText = '';
+            
+            if (safeRate < 0.01) {
+                interpretationText = `
+                    <div class="alert alert-success">
+                        <h6><i class="fas fa-shield-alt"></i> Highly Protected Area</h6>
+                        <p>This area has a very low safe deforestation rate (${safeRate.toFixed(4)}% per year), indicating it contains valuable biodiversity or carbon storage that requires strict protection.</p>
+                        <p><strong>Recommendation:</strong> Focus on conservation and sustainable tourism rather than timber harvesting.</p>
+                    </div>
+                `;
+            } else if (safeRate < 0.1) {
+                interpretationText = `
+                    <div class="alert alert-warning">
+                        <h6><i class="fas fa-exclamation-triangle"></i> Moderate Management Area</h6>
+                        <p>This area allows for limited sustainable forest use (${safeRate.toFixed(4)}% per year), but requires careful management planning.</p>
+                        <p><strong>Recommendation:</strong> Implement selective harvesting with environmental monitoring.</p>
+                    </div>
+                `;
+            } else {
+                interpretationText = `
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-tools"></i> Managed Forest Area</h6>
+                        <p>This area can support higher levels of sustainable forest management (${safeRate.toFixed(4)}% per year).</p>
+                        <p><strong>Recommendation:</strong> Suitable for planned harvesting with replanting programs.</p>
+                    </div>
+                `;
+            }
+
+            // Add general advice
+            interpretationText += `
+                <div class="mt-3">
+                    <h6><i class="fas fa-lightbulb"></i> Key Points to Remember:</h6>
+                    <ul class="list-unstyled">
+                        <li><i class="fas fa-check text-success"></i> Always maintain at least ${data.biodiversity_conservation_requirement.toFixed(0)}% of forest cover</li>
+                        <li><i class="fas fa-check text-success"></i> Plan for natural regeneration and replanting</li>
+                        <li><i class="fas fa-check text-success"></i> Monitor wildlife and ecosystem health regularly</li>
+                        <li><i class="fas fa-check text-success"></i> Consider climate change impacts in long-term planning</li>
+                    </ul>
+                </div>
+            `;
+
+            interpretation.innerHTML = interpretationText;
+        }
+
+        function startOver() {
+            // Reset everything
+            drawnItems.clearLayers();
+            selectedArea = null;
+            analysisResults = null;
+            
+            // Show selection section
+            document.getElementById('results-section').style.display = 'none';
+            document.getElementById('loading-section').style.display = 'none';
+            document.getElementById('selection-section').style.display = 'block';
+            
+            // Reset button state
+            document.getElementById('analyze-btn').disabled = true;
+            
+            // Reset step indicator
+            updateStepIndicator(1);
+        }
+
+        function downloadReport() {
+            if (!analysisResults) {
+                alert('No analysis results available to download.');
+                return;
+            }
+
+            // Create a simple report
+            const report = {
+                timestamp: new Date().toISOString(),
+                area: selectedArea,
+                results: analysisResults,
+                summary: {
+                    safe_deforestation_rate: (analysisResults.safe_deforestation_percentage * 100).toFixed(4) + '% per year',
+                    forest_cover: analysisResults.forest_cover_percentage.toFixed(1) + '%',
+                    protection_required: analysisResults.biodiversity_conservation_requirement.toFixed(0) + '%',
+                    health_score: analysisResults.ecological_resilience_score.toFixed(1) + '/10'
+                }
+            };
+
+            // Download as JSON
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(report, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", `forest_analysis_${new Date().toISOString().split('T')[0]}.json`);
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        function showError(message) {
+            // Create a temporary alert
+            const alert = document.createElement('div');
+            alert.className = 'alert alert-danger alert-dismissible fade show position-fixed';
+            alert.style.top = '20px';
+            alert.style.right = '20px';
+            alert.style.zIndex = '9999';
+            alert.style.maxWidth = '400px';
+            alert.innerHTML = `
+                <i class="fas fa-exclamation-triangle"></i> ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alert);
+            
+            // Auto remove after 8 seconds
+            setTimeout(() => {
+                if (alert.parentNode) {
+                    alert.parentNode.removeChild(alert);
+                }
+            }, 8000);
+        }
+    </script>
+</body>
+</html>

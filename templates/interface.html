@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌳 Forest Analysis System</title>
+    
+    <!-- CSS Libraries -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --forest-green: #2d5016;
+            --light-green: #4a7c59;
+            --nature-green: #8fbc8f;
+            --warm-orange: #ff8c42;
+            --alert-red: #e74c3c;
+            --safe-blue: #3498db;
+            --background: #f8fffe;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: linear-gradient(135deg, var(--background) 0%, #f0f8f0 100%);
+            color: #2c3e50;
+            line-height: 1.6;
+        }
+
+        .hero-section {
+            background: linear-gradient(135deg, var(--forest-green), var(--light-green));
+            color: white;
+            padding: 3rem 0;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .hero-section h1 {
+            font-size: 2.5rem;
+            font-weight: 300;
+            margin-bottom: 1rem;
+        }
+
+        .hero-section p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .card {
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+        }
+
+        .card-header {
+            background: linear-gradient(135deg, var(--light-green), var(--nature-green));
+            color: white;
+            border-radius: 15px 15px 0 0 !important;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--forest-green), var(--light-green));
+            border: none;
+            border-radius: 25px;
+            padding: 10px 30px;
+            font-weight: 500;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, var(--light-green), var(--forest-green));
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--nature-green), var(--light-green));
+            border: none;
+            border-radius: 25px;
+            padding: 10px 30px;
+            font-weight: 500;
+        }
+
+        .btn-warning {
+            background: linear-gradient(135deg, var(--warm-orange), #ffa500);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 30px;
+            font-weight: 500;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, var(--alert-red), #ff6b6b);
+            border: none;
+            border-radius: 25px;
+            padding: 10px 30px;
+            font-weight: 500;
+        }
+
+        .form-control {
+            border-radius: 10px;
+            border: 2px solid #e9ecef;
+            padding: 12px 15px;
+        }
+
+        .form-control:focus {
+            border-color: var(--light-green);
+            box-shadow: 0 0 0 0.2rem rgba(74, 124, 89, 0.25);
+        }
+
+        .result-card {
+            background: linear-gradient(135deg, #ffffff, #f8fffe);
+            border-left: 5px solid var(--light-green);
+        }
+
+        .metric-card {
+            background: white;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--forest-green);
+        }
+
+        .metric-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .risk-high { color: var(--alert-red); }
+        .risk-medium { color: var(--warm-orange); }
+        .risk-low { color: var(--safe-blue); }
+
+        #map {
+            height: 400px;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+
+        .spinner-border {
+            color: var(--light-green);
+        }
+
+        .example-coords {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1rem;
+            margin-top: 1rem;
+        }
+
+        .example-coords h6 {
+            color: var(--forest-green);
+            margin-bottom: 0.5rem;
+        }
+
+        .example-coords .coord {
+            background: white;
+            border-radius: 5px;
+            padding: 0.5rem;
+            margin: 0.25rem;
+            display: inline-block;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .example-coords .coord:hover {
+            border-color: var(--light-green);
+            background: var(--background);
+        }
+
+        .footer {
+            background: var(--forest-green);
+            color: white;
+            padding: 2rem 0;
+            margin-top: 3rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <div class="container">
+            <h1><i class="fas fa-tree"></i> Forest Analysis System</h1>
+            <p>Advanced environmental monitoring and risk assessment platform for sustainable forest management</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- Analysis Form -->
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-map-marker-alt"></i> Location Analysis</h3>
+            </div>
+            <div class="card-body">
+                <form id="analysisForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="latitude" class="form-label">Latitude</label>
+                                <input type="number" class="form-control" id="latitude" step="any" placeholder="e.g., -10.123">
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="longitude" class="form-label">Longitude</label>
+                                <input type="number" class="form-control" id="longitude" step="any" placeholder="e.g., -60.456">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Analysis Type</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="analysisType" id="pointAnalysis" value="point" checked>
+                            <label class="form-check-label" for="pointAnalysis">
+                                Point Analysis
+                            </label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="analysisType" id="rectangleAnalysis" value="rectangle">
+                            <label class="form-check-label" for="rectangleAnalysis">
+                                Rectangle Analysis
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="rectangleInputs" style="display: none;">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="north" class="form-label">North</label>
+                                    <input type="number" class="form-control" id="north" step="any">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="south" class="form-label">South</label>
+                                    <input type="number" class="form-control" id="south" step="any">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="east" class="form-label">East</label>
+                                    <input type="number" class="form-control" id="east" step="any">
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="west" class="form-label">West</label>
+                                    <input type="number" class="form-control" id="west" step="any">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-search"></i> Analyze Location
+                        </button>
+                        <button type="button" class="btn btn-success" id="downloadReport">
+                            <i class="fas fa-download"></i> Download PDF
+                        </button>
+                    </div>
+                </form>
+
+                <!-- Example Coordinates -->
+                <div class="example-coords">
+                    <h6><i class="fas fa-lightbulb"></i> Try these example locations:</h6>
+                    <div class="coord" data-lat="-10.123" data-lon="-60.456">Amazon Basin</div>
+                    <div class="coord" data-lat="40.7128" data-lon="-74.0060">New York</div>
+                    <div class="coord" data-lat="51.5074" data-lon="-0.1278">London</div>
+                    <div class="coord" data-lat="35.6762" data-lon="139.6503">Tokyo</div>
+                    <div class="coord" data-lat="-23.5505" data-lon="-46.6333">São Paulo</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Interactive Map -->
+        <div class="card">
+            <div class="card-header">
+                <h3><i class="fas fa-globe"></i> Interactive Map</h3>
+            </div>
+            <div class="card-body">
+                <div id="map"></div>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div class="loading" id="loading">
+            <div class="spinner-border" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-2">Analyzing location...</p>
+        </div>
+
+        <!-- Results -->
+        <div id="results" style="display: none;">
+            <div class="card result-card">
+                <div class="card-header">
+                    <h3><i class="fas fa-chart-line"></i> Analysis Results</h3>
+                </div>
+                <div class="card-body">
+                    <div class="row" id="resultsContent">
+                        <!-- Results will be populated here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+        <div class="container text-center">
+            <p>&copy; 2024 Forest Analysis System. Built for environmental conservation and sustainable development.</p>
+        </div>
+    </div>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    
+    <script>
+        // Initialize map
+        const map = L.map('map').setView([0, 0], 2);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors'
+        }).addTo(map);
+
+        let currentMarker = null;
+
+        // Form handling
+        document.getElementById('analysisForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            await analyzeLocation();
+        });
+
+        // Analysis type toggle
+        document.querySelectorAll('input[name="analysisType"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const rectangleInputs = document.getElementById('rectangleInputs');
+                if (this.value === 'rectangle') {
+                    rectangleInputs.style.display = 'block';
+                } else {
+                    rectangleInputs.style.display = 'none';
+                }
+            });
+        });
+
+        // Example coordinates
+        document.querySelectorAll('.coord').forEach(coord => {
+            coord.addEventListener('click', function() {
+                const lat = parseFloat(this.dataset.lat);
+                const lon = parseFloat(this.dataset.lon);
+                document.getElementById('latitude').value = lat;
+                document.getElementById('longitude').value = lon;
+                
+                // Update map
+                map.setView([lat, lon], 10);
+                if (currentMarker) {
+                    map.removeLayer(currentMarker);
+                }
+                currentMarker = L.marker([lat, lon]).addTo(map);
+            });
+        });
+
+        // Download PDF
+        document.getElementById('downloadReport').addEventListener('click', async function() {
+            const formData = getFormData();
+            if (!formData) return;
+
+            try {
+                const response = await fetch('/api/report/pdf', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = `forest_analysis_${new Date().toISOString().slice(0, 10)}.pdf`;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                } else {
+                    alert('Error generating PDF report');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error generating PDF report');
+            }
+        });
+
+        function getFormData() {
+            const analysisType = document.querySelector('input[name="analysisType"]:checked').value;
+            
+            if (analysisType === 'point') {
+                const lat = parseFloat(document.getElementById('latitude').value);
+                const lon = parseFloat(document.getElementById('longitude').value);
+                
+                if (isNaN(lat) || isNaN(lon)) {
+                    alert('Please enter valid coordinates');
+                    return null;
+                }
+                
+                return {
+                    area_type: 'point',
+                    latitude: lat,
+                    longitude: lon
+                };
+            } else {
+                const north = parseFloat(document.getElementById('north').value);
+                const south = parseFloat(document.getElementById('south').value);
+                const east = parseFloat(document.getElementById('east').value);
+                const west = parseFloat(document.getElementById('west').value);
+                
+                if (isNaN(north) || isNaN(south) || isNaN(east) || isNaN(west)) {
+                    alert('Please enter valid bounds');
+                    return null;
+                }
+                
+                return {
+                    area_type: 'rectangle',
+                    bounds: { north, south, east, west }
+                };
+            }
+        }
+
+        async function analyzeLocation() {
+            const formData = getFormData();
+            if (!formData) return;
+
+            // Show loading
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('results').style.display = 'none';
+
+            try {
+                const response = await fetch('/api/analyze', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    displayResults(data);
+                    
+                    // Update map
+                    const lat = formData.latitude || (formData.bounds.north + formData.bounds.south) / 2;
+                    const lon = formData.longitude || (formData.bounds.east + formData.bounds.west) / 2;
+                    
+                    map.setView([lat, lon], 10);
+                    if (currentMarker) {
+                        map.removeLayer(currentMarker);
+                    }
+                    currentMarker = L.marker([lat, lon]).addTo(map);
+                } else {
+                    alert('Error: ' + (data.error || 'Analysis failed'));
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Error: ' + error.message);
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function displayResults(data) {
+            const resultsContent = document.getElementById('resultsContent');
+            
+            const riskLevel = data.conservation_priority;
+            const riskClass = riskLevel === 'critical' || riskLevel === 'very_high' ? 'risk-high' : 
+                             riskLevel === 'high' || riskLevel === 'medium' ? 'risk-medium' : 'risk-low';
+
+            resultsContent.innerHTML = `
+                <div class="col-md-4">
+                    <div class="metric-card">
+                        <div class="metric-value ${riskClass}">${(data.safe_deforestation_percentage * 100).toFixed(3)}%</div>
+                        <div class="metric-label">Safe Deforestation Rate</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="metric-card">
+                        <div class="metric-value">${data.forest_cover_percentage.toFixed(1)}%</div>
+                        <div class="metric-label">Forest Cover</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="metric-card">
+                        <div class="metric-value ${riskClass}">${data.conservation_priority.toUpperCase()}</div>
+                        <div class="metric-label">Conservation Priority</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="metric-card">
+                        <div class="metric-value">${data.region_name}</div>
+                        <div class="metric-label">Region</div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="metric-card">
+                        <div class="metric-value">${data.land_use_type.replace('_', ' ').toUpperCase()}</div>
+                        <div class="metric-label">Land Use Type</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="metric-card">
+                        <div class="metric-value">${data.average_carbon_stock.toFixed(1)} Mg/ha</div>
+                        <div class="metric-label">Carbon Stock</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="metric-card">
+                        <div class="metric-value">${data.average_species_richness}</div>
+                        <div class="metric-label">Species Richness</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="metric-card">
+                        <div class="metric-value">${data.canopy_height.toFixed(1)} m</div>
+                        <div class="metric-label">Canopy Height</div>
+                    </div>
+                </div>
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        <h6><i class="fas fa-info-circle"></i> Analysis Summary</h6>
+                        <p><strong>Forest Type:</strong> ${data.forest_type_name}</p>
+                        <p><strong>Ecological Resilience:</strong> ${(data.ecological_resilience_score * 100).toFixed(1)}%</p>
+                        <p><strong>Minimum Forest Cover Required:</strong> ${data.minimum_forest_cover_required.toFixed(1)}%</p>
+                        <p><strong>Biodiversity Conservation Requirement:</strong> ${data.biodiversity_conservation_requirement.toFixed(1)}%</p>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('results').style.display = 'block';
+        }
+    </script>
+</body>
+</html>

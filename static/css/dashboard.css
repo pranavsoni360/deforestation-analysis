@@ -1,0 +1,158 @@
+/* Additional custom styles for the dashboard */
+
+.leaflet-container {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.info.legend {
+    background: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 0 15px rgba(0, 0, 0, 0.2);
+    border-radius: 5px;
+    padding: 6px 8px;
+    line-height: 18px;
+    color: #555;
+}
+
+.info.legend i {
+    width: 18px;
+    height: 18px;
+    float: left;
+    margin-right: 8px;
+    opacity: 0.7;
+}
+
+.info.legend h6 {
+    margin: 0 0 5px;
+    color: #777;
+    font-size: 12px;
+    font-weight: bold;
+}
+
+/* Loading animations */
+.fade-in {
+    animation: fadeIn 0.5s;
+}
+
+@keyframes fadeIn {
+    from {opacity: 0;}
+    to {opacity: 1;}
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .dashboard-header h1 {
+        font-size: 1.5rem;
+    }
+    
+    .stat-card {
+        margin-bottom: 1rem;
+    }
+    
+    .chart-container {
+        height: 300px;
+    }
+    
+    #map {
+        height: 300px;
+    }
+}
+
+/* Chart loading state */
+.chart-loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 300px;
+    color: #6c757d;
+}
+
+/* Data table styling */
+.data-table {
+    font-size: 0.9rem;
+}
+
+.data-table th {
+    background-color: #f8f9fa;
+    border-top: none;
+}
+
+/* Status badges */
+.status-online {
+    color: #28a745;
+}
+
+.status-warning {
+    color: #ffc107;
+}
+
+.status-error {
+    color: #dc3545;
+}
+
+/* Export button styling */
+.btn-export {
+    background-color: #17a2b8;
+    border-color: #17a2b8;
+    color: white;
+}
+
+.btn-export:hover {
+    background-color: #138496;
+    border-color: #117a8b;
+}
+
+/* Map controls styling */
+.leaflet-control-zoom {
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.leaflet-popup-content-wrapper {
+    border-radius: 8px;
+}
+
+/* Alert styling */
+.alert-item:hover {
+    transform: translateX(2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    transition: all 0.2s ease;
+}
+
+/* Form styling improvements */
+.form-control:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(45, 80, 22, 0.25);
+}
+
+.form-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(45, 80, 22, 0.25);
+}
+
+/* Card hover effects */
+.chart-container:hover,
+.map-container:hover,
+.table-container:hover {
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    transition: box-shadow 0.2s ease;
+}
+
+/* Progress bars for loading */
+.loading-bar {
+    width: 100%;
+    height: 4px;
+    background-color: #f8f9fa;
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.loading-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+    animation: loading 2s ease-in-out infinite;
+}
+
+@keyframes loading {
+    0% { transform: translateX(-100%); }
+    50% { transform: translateX(100%); }
+    100% { transform: translateX(100%); }
+}
