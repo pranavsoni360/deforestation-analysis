@@ -3,7 +3,10 @@ echo 🌳 Forest Analysis System - Easy Launcher
 echo ========================================
 echo.
 echo Starting the complete Forest Analysis System...
-echo This includes all features in one application.
+echo This will automatically:
+echo - Check and install dependencies
+echo - Start the web server
+echo - Open your browser
 echo.
-python main.py
+python run.py
 pause
