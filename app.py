@@ -9,3 +9,7 @@ from main import app
 
 # This is the entry point for Vercel
 # The app object from main.py will be used by Vercel
+
+# Make sure the app is available for Vercel
+if __name__ == "__main__":
+    app.run()
